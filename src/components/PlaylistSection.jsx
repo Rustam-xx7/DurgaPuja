@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, Play, Pause, Music, Radio, Film, Sparkles } from "lucide-react";
+import { Search, Play, Pause, Music, Radio } from "lucide-react";
 
 export default function PlaylistSection({
   playlist,
@@ -12,7 +12,7 @@ export default function PlaylistSection({
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Category list
+  // Category list for top filter pills
   const categories = [
     { id: "all", label: "All Tracks" },
     { id: "agomoni", label: "Mahalaya & Chants" },
@@ -55,13 +55,13 @@ export default function PlaylistSection({
           </p>
         </div>
 
-        {/* Category Pills */}
+        {/* Category Filter Pills */}
         <div className="flex flex-wrap items-center gap-1.5 glass-panel-subtle p-1.5 rounded-2xl border border-white/15">
           {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 selectedCategory === cat.id
                   ? "bg-sindoor text-white shadow-md"
                   : "text-sholapith-muted hover:text-sholapith hover:bg-white/10"
@@ -89,7 +89,7 @@ export default function PlaylistSection({
         </span>
       </div>
 
-      {/* Playlist Table */}
+      {/* Playlist Table (Title & Artist, Duration, Play) */}
       <div className="glass-panel rounded-3xl overflow-hidden border border-white/20 shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
@@ -97,7 +97,6 @@ export default function PlaylistSection({
               <tr>
                 <th className="py-3.5 px-4 w-12 text-center">#</th>
                 <th className="py-3.5 px-4">Title & Artist (গানের নাম ও শিল্পী)</th>
-                <th className="py-3.5 px-4 hidden sm:table-cell">Category</th>
                 <th className="py-3.5 px-4 text-right">Duration</th>
                 <th className="py-3.5 px-4 w-28 text-center">Play</th>
               </tr>
@@ -105,7 +104,7 @@ export default function PlaylistSection({
             <tbody className="divide-y divide-white/5">
               {filteredTracks.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="py-8 text-center text-sm text-sholapith-muted">
+                  <td colSpan="4" className="py-8 text-center text-sm text-sholapith-muted">
                     No songs found matching your search. Try adding a new YouTube link below!
                   </td>
                 </tr>
@@ -122,6 +121,7 @@ export default function PlaylistSection({
                           : ""
                       }`}
                     >
+                      {/* Track Number / Active Indicator */}
                       <td className="py-4 px-4 text-center text-xs font-mono text-sholapith-muted">
                         {isActive ? (
                           <span className="text-pujaGold font-bold">▶</span>
@@ -129,6 +129,8 @@ export default function PlaylistSection({
                           String(idx + 1).padStart(2, "0")
                         )}
                       </td>
+
+                      {/* Title & Artist Column */}
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
                           <div
@@ -158,27 +160,20 @@ export default function PlaylistSection({
                           </div>
                         </div>
                       </td>
-                      <td className="py-4 px-4 hidden sm:table-cell">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-xs ${
-                            isActive
-                              ? "bg-sindoor/30 text-rose-200 border border-sindoor/40 font-semibold"
-                              : "bg-pujaGold/15 text-pujaGold border border-pujaGold/30"
-                          }`}
-                        >
-                          {track.categoryLabel || track.category || "Festive"}
-                        </span>
-                      </td>
+
+                      {/* Duration Column */}
                       <td className="py-4 px-4 text-right text-xs font-mono text-sholapith-muted">
                         {track.duration || "04:00"}
                       </td>
+
+                      {/* Play Action Button Column */}
                       <td className="py-4 px-4 text-center">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             onSelectTrack(track);
                           }}
-                          className={`w-8 h-8 rounded-full inline-flex items-center justify-center transition-all ${
+                          className={`w-8 h-8 rounded-full inline-flex items-center justify-center transition-all cursor-pointer ${
                             isActive && isPlaying
                               ? "bg-sindoor text-white shadow-md"
                               : "bg-white/10 hover:bg-sindoor text-sholapith hover:text-white"

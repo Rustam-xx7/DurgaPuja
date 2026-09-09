@@ -373,14 +373,14 @@ export default function CompactPlayerDock({
           </div>
 
           {/* Expand Video Button */}
-          <button
+          {/* <button
             onClick={onOpenFullVideo}
             className="p-2 rounded-full glass-panel-subtle hover:bg-white/20 text-pujaGold hover:text-white transition-colors cursor-pointer"
             title="Open Full Video Modal"
             type="button"
           >
             <Maximize2 className="w-4 h-4" />
-          </button>
+          </button> */}
         </div>
 
       </div>

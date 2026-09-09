@@ -5,11 +5,11 @@ import React from "react";
 export default function HeroDeck() {
   return (
     <section
-      className="min-h-screen w-full flex items-center justify-center text-center relative py-12 -mt-20"
+      className="min-h-screen w-full flex items-start justify-center text-start relative py-12 -mt-20"
       id="hero-section"
     >
       {/* Centered Alpona Image Container with Centered White Text Overlay */}
-      <div className="relative flex items-center justify-center w-60 max-w-100 sm:max-w-xl aspect-square mx-auto p-4">
+      <div className="relative top-45 flex items-center justify-center w-40 max-w-80 sm:max-w-xl aspect-square mx-auto p-4">
         {/* Alpona Image from /public/alpona.jpg */}
         <img
           src="/alpona.jpg"
@@ -18,7 +18,7 @@ export default function HeroDeck() {
         />
 
         {/* White Text Overlay */}
-        <h1 className="absolute inset-0 flex items-center justify-center text-sm sm:text-xl lg:text-2xl font-serif font-bold text-white tracking-wide drop-shadow-[0_6px_24px_rgba(0,0,0,0.95)] px-4 select-none">
+        <h1 className="absolute inset-0 flex items-center justify-center text-sm sm:text-mg lg:text-mg font-serif font-bold text-white tracking-wide drop-shadow-[0_6px_24px_rgba(0,0,0,0.95)] px-4 select-none">
           দুর্গাপূজার গান
         </h1>
       </div>
