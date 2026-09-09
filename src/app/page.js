@@ -8,17 +8,23 @@ import AddVideoForm from "../components/AddVideoForm";
 import PandalLocationMap from "../components/PandalLocationMap";
 import FaqSection from "../components/FaqSection";
 import PosterModal from "../components/PosterModal";
+import FuchkaModal from "../components/FuchkaModal";
 import IntroLoaderModal from "../components/IntroLoaderModal";
 import CompactPlayerDock from "../components/CompactPlayerDock";
 import VideoModal from "../components/VideoModal";
 import { initialPlaylist } from "../data/playlist";
+import { useActiveUsers } from "../hooks/useActiveUsers";
 
 export default function Home() {
   const [playlist, setPlaylist] = useState(initialPlaylist);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isPosterOpen, setIsPosterOpen] = useState(false);
+  const [isFuchkaOpen, setIsFuchkaOpen] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+
+  // Real-time live active user counting hook
+  const { activeUsers } = useActiveUsers();
 
   const currentTrack = playlist[currentIndex] || playlist[0];
 
@@ -68,21 +74,19 @@ export default function Home() {
   return (
     <div className="min-h-screen relative flex flex-col justify-between">
       {/* Gentle Ambient Wash Overlay */}
-      <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-black/30 via-black/45 to-black/75"></div>
+      <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-black/10 via-black/10 to-black/25"></div>
 
-      {/* Floating Pill Navbar Header */}
+      {/* Header with Live User Counter and Action Buttons */}
       <Navbar
+        activeUsers={activeUsers}
+        onOpenFuchka={() => setIsFuchkaOpen(true)}
         onOpenPoster={() => setIsPosterOpen(true)}
-        onOpenAddSong={() => scrollToSection("submit-section")}
       />
 
       {/* Main Scrollable Content Over Fixed durgaImage Background */}
       <main className="relative z-10 w-full pt-20 pb-36 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 flex-1">
         {/* Editorial Hero Section */}
-        <HeroDeck
-          onOpenPoster={() => setIsPosterOpen(true)}
-          onScrollToSubmit={() => scrollToSection("submit-section")}
-        />
+        <HeroDeck />
 
         {/* Dynamic Searchable YouTube Video Playlist Table */}
         <PlaylistSection
@@ -131,6 +135,10 @@ export default function Home() {
       <PosterModal
         isOpen={isPosterOpen}
         onClose={() => setIsPosterOpen(false)}
+      />
+      <FuchkaModal
+        isOpen={isFuchkaOpen}
+        onClose={() => setIsFuchkaOpen(false)}
       />
       <IntroLoaderModal
         onConfirmStart={(start) => setIsPlaying(start)}

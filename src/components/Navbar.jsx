@@ -1,69 +1,49 @@
 "use client";
 
 import React from "react";
-import { Radio, Music, Printer, Link2, Soup } from "lucide-react";
+import { Soup, QrCode } from "lucide-react";
 
-export default function Navbar({ onOpenPoster, onOpenAddSong }) {
+export default function Navbar({ activeUsers = 1, onOpenFuchka, onOpenPoster }) {
   return (
-    <nav className="fixed top-4 inset-x-0 z-50 px-4 flex justify-center pointer-events-none">
-      <div className="pointer-events-auto max-w-6xl w-full flex flex-wrap items-center justify-between gap-3 px-5 py-2.5 rounded-full glass-panel shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/20">
-        {/* Brand & Live Indicator */}
-        <div className="flex items-center gap-3">
-          <a className="flex items-center gap-2 group" href="#">
-            <span className="w-2.5 h-2.5 rounded-full bg-sindoor animate-ping"></span>
-            <span className="font-serif font-bold text-lg md:text-xl text-sholapith tracking-wide group-hover:text-pujaGold transition-colors">
-              দুর্গাপূজার গান
-            </span>
-          </a>
-          <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-white/15 text-xs text-sholapith-muted">
-            <span className="flex items-center gap-1 text-rose-300 font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> 1,420 listening
-            </span>
-            <span className="text-white/30">•</span>
-            <span className="text-pujaGold font-medium">শারদীয়া উৎসব</span>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="flex items-center gap-2">
-          <a
-            className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-sholapith hover:bg-white/10 transition-colors border border-white/10"
-            href="#player-section"
-          >
-            <Radio className="w-3.5 h-3.5 text-pujaGold" /> Radio Deck
-          </a>
-          <a
-            className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-sholapith hover:bg-white/10 transition-colors border border-white/10"
-            href="#playlist-section"
-          >
-            <Music className="w-3.5 h-3.5 text-pujaGold" /> Playlist
-          </a>
-          <button
-            onClick={onOpenAddSong}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-sindoor/20 hover:bg-sindoor/30 text-rose-200 border border-sindoor/40 transition-all"
-            type="button"
-          >
-            <span className="text-sindoor font-bold">+</span>
-            <span>Add Song</span>
-          </button>
-          <button
-            onClick={onOpenPoster}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white/10 hover:bg-white/15 text-sholapith border border-white/15 transition-all"
-            type="button"
-          >
-            <Printer className="w-3.5 h-3.5 text-pujaGold" />
-            <span className="hidden sm:inline">QR Poster</span>
-          </button>
-          <button
-            onClick={onOpenPoster}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-sindoor hover:bg-sindoor-dark text-white shadow-lg transition-all border border-rose-400/40"
-            type="button"
-          >
-            <Soup className="w-3.5 h-3.5 text-amber-300" />
-            <span>Fuchka Counter</span>
-          </button>
+    <header className="fixed top-0 inset-x-0 z-50 p-4 sm:p-6 flex items-center justify-between pointer-events-none">
+      {/* Top Left: Live Active Users Counter */}
+      <div className="pointer-events-auto flex items-center">
+        <div className="flex items-center gap-2.5 px-4 py-2 rounded-full glass-panel shadow-[0_8px_24px_rgba(0,0,0,0.5)] border border-white/20 text-xs sm:text-sm font-medium text-sholapith backdrop-blur-md">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+          </span>
+          <span className="font-bold text-emerald-400 font-mono tracking-wide">
+            {activeUsers.toLocaleString()}
+          </span>
+          <span className="text-sholapith/90">
+            {activeUsers === 1 ? "user live on site" : "users live on site"}
+          </span>
         </div>
       </div>
-    </nav>
+
+      {/* Top Right: Buy me a Fuchka & Share with QR Buttons */}
+      <div className="pointer-events-auto flex items-center gap-2.5">
+        {/* Buy me a Fuchka Button */}
+        <button
+          onClick={onOpenFuchka}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 via-rose-500 to-sindoor hover:opacity-95 text-white shadow-[0_4px_20px_rgba(217,56,58,0.4)] border border-amber-300/40 transition-all cursor-pointer transform hover:scale-[1.02] active:scale-[0.98]"
+          type="button"
+        >
+          <Soup className="w-4 h-4 text-amber-300 animate-bounce" />
+          <span>Buy me a Fuchka</span>
+        </button>
+
+        {/* Share with QR Button */}
+        <button
+          onClick={onOpenPoster}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold glass-panel hover:bg-white/20 text-sholapith shadow-[0_4px_20px_rgba(0,0,0,0.4)] border border-white/25 transition-all cursor-pointer transform hover:scale-[1.02] active:scale-[0.98]"
+          type="button"
+        >
+          <QrCode className="w-4 h-4 text-pujaGold" />
+          <span>Share with QR</span>
+        </button>
+      </div>
+    </header>
   );
 }

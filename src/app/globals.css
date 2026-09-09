@@ -76,6 +76,29 @@ body {
   animation: barGlow 2.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
+/* Animated Sound Bar Equalizer Spectrum */
+@keyframes eqBar1 {
+  0%, 100% { height: 4px; }
+  50% { height: 18px; }
+}
+@keyframes eqBar2 {
+  0%, 100% { height: 18px; }
+  50% { height: 6px; }
+}
+@keyframes eqBar3 {
+  0%, 100% { height: 8px; }
+  50% { height: 22px; }
+}
+@keyframes eqBar4 {
+  0%, 100% { height: 20px; }
+  50% { height: 5px; }
+}
+
+.animate-eq-1 { animation: eqBar1 0.6s ease-in-out infinite; }
+.animate-eq-2 { animation: eqBar2 0.7s ease-in-out infinite; }
+.animate-eq-3 { animation: eqBar3 0.5s ease-in-out infinite; }
+.animate-eq-4 { animation: eqBar4 0.8s ease-in-out infinite; }
+
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 7px;

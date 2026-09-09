@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Play, Pause, SkipBack, SkipForward, Volume2, Maximize2, Radio, VolumeX } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Volume2, Maximize2, VolumeX, BarChart2 } from "lucide-react";
 
 export default function CompactPlayerDock({
   track,
@@ -13,12 +13,13 @@ export default function CompactPlayerDock({
 }) {
   const [volume, setVolume] = useState(85);
   const [isMuted, setIsMuted] = useState(false);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [ambience, setAmbience] = useState({
     dhaak: false,
     shonkho: false
   });
 
-  const iframeRef = useRef(null);
+  const playerRef = useRef(null);
   const audioCtxRef = useRef(null);
   const dhaakTimerRef = useRef(null);
 
@@ -37,57 +38,131 @@ export default function CompactPlayerDock({
     return audioCtxRef.current;
   };
 
-  // 1. YouTube IFrame API PostMessage Control for Play / Pause
+  // 1. Initialize Official YouTube IFrame Player API
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const sendCommand = () => {
-      if (iframeRef.current && iframeRef.current.contentWindow) {
-        const func = isPlaying ? "playVideo" : "pauseVideo";
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: "command", func: func, args: [] }),
-          "*"
-        );
-      }
+    if (typeof window === "undefined" || !track) return;
+
+    const initPlayer = () => {
+      if (playerRef.current) return;
+
+      playerRef.current = new window.YT.Player("youtube-compact-iframe-player", {
+        videoId: track.id,
+        playerVars: {
+          autoplay: isPlaying ? 1 : 0,
+          enablejsapi: 1,
+          controls: 0,
+          modestbranding: 1,
+          rel: 0,
+          origin: window.location.origin,
+        },
+        events: {
+          onReady: (event) => {
+            setIsPlayerReady(true);
+            event.target.setVolume(volume);
+            if (isPlaying) {
+              event.target.playVideo();
+            }
+          },
+          onStateChange: (event) => {
+            // YT.PlayerState.ENDED = 0
+            if (event.data === 0) {
+              onNextTrack();
+            }
+          },
+        },
+      });
     };
 
-    const timer = setTimeout(sendCommand, 300);
-    return () => clearTimeout(timer);
-  }, [isPlaying, track?.id]);
+    if (window.YT && window.YT.Player) {
+      initPlayer();
+    } else {
+      // Load YouTube API script dynamically
+      if (!document.getElementById("yt-iframe-api-script")) {
+        const tag = document.createElement("script");
+        tag.id = "yt-iframe-api-script";
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName("script")[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+      }
 
-  // Handle Volume Change via YouTube JS API
+      window.onYouTubeIframeAPIReady = () => {
+        initPlayer();
+      };
+    }
+  }, []);
+
+  // 2. React to track changes -> Load new video
+  useEffect(() => {
+    if (!track?.id) return;
+    if (playerRef.current && typeof playerRef.current.loadVideoById === "function") {
+      playerRef.current.loadVideoById(track.id);
+      if (isPlaying) {
+        playerRef.current.playVideo();
+      }
+    }
+  }, [track?.id]);
+
+  // 3. React to isPlaying changes -> Play/Pause YouTube video
+  useEffect(() => {
+    if (!playerRef.current) return;
+    try {
+      if (isPlaying) {
+        if (typeof playerRef.current.playVideo === "function") {
+          playerRef.current.playVideo();
+        }
+      } else {
+        if (typeof playerRef.current.pauseVideo === "function") {
+          playerRef.current.pauseVideo();
+        }
+      }
+    } catch (err) {
+      // Ignored
+    }
+  }, [isPlaying]);
+
+  // Play / Pause Click Handler
+  const handlePlayPauseClick = () => {
+    getAudioContext();
+    onTogglePlay();
+  };
+
+  // Handle Volume Slider Change
   const handleVolumeChange = (e) => {
     const newVol = Number(e.target.value);
     setVolume(newVol);
     setIsMuted(newVol === 0);
 
-    if (iframeRef.current && iframeRef.current.contentWindow) {
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: "command", func: "setVolume", args: [newVol] }),
-        "*"
-      );
+    if (playerRef.current && typeof playerRef.current.setVolume === "function") {
+      playerRef.current.setVolume(newVol);
+      if (newVol > 0 && typeof playerRef.current.unMute === "function") {
+        playerRef.current.unMute();
+      }
     }
   };
 
+  // Mute / Unmute Handler
   const toggleMute = () => {
     const nextMute = !isMuted;
     setIsMuted(nextMute);
 
-    if (iframeRef.current && iframeRef.current.contentWindow) {
-      const func = nextMute ? "mute" : "unMute";
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: "command", func: func, args: [] }),
-        "*"
-      );
+    if (playerRef.current) {
+      if (nextMute && typeof playerRef.current.mute === "function") {
+        playerRef.current.mute();
+      } else if (!nextMute && typeof playerRef.current.unMute === "function") {
+        playerRef.current.unMute();
+        if (typeof playerRef.current.setVolume === "function") {
+          playerRef.current.setVolume(volume || 80);
+        }
+      }
     }
   };
 
-  // 2. Authentic Bengali Dhaak Beat Synthesizer (Web Audio API)
+  // Authentic Bengali Dhaak Beat Synthesizer
   const playDhaakBeat = () => {
     const ctx = getAudioContext();
     if (!ctx) return;
 
     const now = ctx.currentTime;
-    // Bass Dhaak hit
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = "triangle";
@@ -100,7 +175,6 @@ export default function CompactPlayerDock({
     osc.start(now);
     osc.stop(now + 0.15);
 
-    // Rim Snare stroke
     setTimeout(() => {
       if (!audioCtxRef.current) return;
       const t = audioCtxRef.current.currentTime;
@@ -117,7 +191,7 @@ export default function CompactPlayerDock({
     }, 120);
   };
 
-  // 3. Sacred Shonkho (Conch) Sound Synthesizer (Web Audio API)
+  // Sacred Shonkho (Conch) Sound Synthesizer
   const playShonkhoSound = () => {
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -170,14 +244,6 @@ export default function CompactPlayerDock({
 
   if (!track) return null;
 
-  // Format Embed URL with enablejsapi=1
-  let embedSrc = track.embedUrl;
-  if (!embedSrc && track.id) {
-    embedSrc = `https://www.youtube.com/embed/${track.id}?enablejsapi=1&autoplay=1`;
-  } else if (embedSrc && !embedSrc.includes("enablejsapi=1")) {
-    embedSrc += (embedSrc.includes("?") ? "&" : "?") + "enablejsapi=1&autoplay=1";
-  }
-
   return (
     <aside className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-4xl px-2">
       <div className="glass-panel rounded-3xl sm:rounded-full shadow-[0_16px_50px_rgba(0,0,0,0.85)] p-2.5 sm:px-5 sm:py-3 flex flex-col md:flex-row items-center justify-between gap-3 border-2 border-white/20 relative overflow-hidden backdrop-blur-2xl bg-black/80">
@@ -185,34 +251,28 @@ export default function CompactPlayerDock({
         {/* Festive aura glow inside dock */}
         <div className="absolute -top-10 -left-10 w-32 h-32 bg-sindoor/20 rounded-full blur-2xl pointer-events-none"></div>
 
-        {/* Left Side: Small Round Circular Video Player Avatar */}
+        {/* Left Side: Circular Video Player Avatar with YouTube API Container */}
         <div className="flex items-center gap-3.5 w-full md:w-auto min-w-0">
           <div
             onClick={onOpenFullVideo}
             className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-pujaGold shadow-[0_0_16px_rgba(233,195,73,0.5)] shrink-0 cursor-pointer group bg-black"
             title="Click to view full video"
           >
-            {/* Embedded Circular YouTube Video with iFrame JS API */}
-            <iframe
-              ref={iframeRef}
-              key={track.id}
-              className="absolute top-1/2 left-1/2 w-[240%] h-[240%] -translate-x-1/2 -translate-y-1/2 pointer-events-none object-cover scale-110"
-              src={embedSrc}
-              title={track.title || "Circular Video Preview"}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-            ></iframe>
+            {/* Embedded YouTube IFrame API Target Element */}
+            <div className="absolute top-1/2 left-1/2 w-[240%] h-[240%] -translate-x-1/2 -translate-y-1/2 pointer-events-none scale-110">
+              <div id="youtube-compact-iframe-player" className="w-full h-full"></div>
+            </div>
 
             {/* Hover Expand Overlay Ring */}
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-pujaGold">
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-pujaGold z-10">
               <Maximize2 className="w-5 h-5 drop-shadow-md" />
             </div>
 
             {/* Circular Ring Border Accent */}
-            <div className="absolute inset-0 rounded-full border border-white/30 pointer-events-none"></div>
+            <div className="absolute inset-0 rounded-full border border-white/30 pointer-events-none z-10"></div>
           </div>
 
-          {/* Track Metadata */}
+          {/* Track Metadata & Live Sound Bar Visualizer */}
           <div className="flex flex-col min-w-0 flex-1">
             <div className="flex items-center gap-1.5 text-[10px] font-mono">
               <span className={`w-2 h-2 rounded-full ${isPlaying ? "bg-sindoor animate-ping" : "bg-gray-500"}`}></span>
@@ -227,10 +287,19 @@ export default function CompactPlayerDock({
               {track.artist}
             </p>
           </div>
+
+          {/* Interactive Sound Bar Visualizer (Equalizer) */}
+          <div className="flex items-end gap-1 h-5 px-2 py-0.5 rounded-lg bg-black/40 border border-white/10 shrink-0" title="Sound Bar Visualizer">
+            <span className={`w-1 bg-pujaGold rounded-full transition-all ${isPlaying ? "animate-eq-1" : "h-1 opacity-40"}`}></span>
+            <span className={`w-1 bg-rose-400 rounded-full transition-all ${isPlaying ? "animate-eq-2" : "h-2 opacity-40"}`}></span>
+            <span className={`w-1 bg-pujaGold rounded-full transition-all ${isPlaying ? "animate-eq-3" : "h-1.5 opacity-40"}`}></span>
+            <span className={`w-1 bg-sindoor rounded-full transition-all ${isPlaying ? "animate-eq-4" : "h-1 opacity-40"}`}></span>
+          </div>
         </div>
 
-        {/* Middle: Playback Controls */}
+        {/* Middle: Playback Controls (Previous, Play/Pause, Next) */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Previous Track Button */}
           <button
             onClick={onPrevTrack}
             className="w-10 h-10 rounded-full glass-panel-subtle hover:bg-sindoor/40 hover:text-white flex items-center justify-center text-sholapith transition-colors active:scale-95 cursor-pointer"
@@ -240,8 +309,9 @@ export default function CompactPlayerDock({
             <SkipBack className="w-4 h-4" />
           </button>
           
+          {/* Play / Pause Toggle Button */}
           <button
-            onClick={onTogglePlay}
+            onClick={handlePlayPauseClick}
             className="w-12 h-12 rounded-full bg-sindoor hover:bg-sindoor-dark text-white flex items-center justify-center transition-all shadow-[0_0_22px_rgba(217,56,58,0.7)] border border-rose-300/40 active:scale-95 cursor-pointer"
             title={isPlaying ? "Pause Video" : "Play Video"}
             type="button"
@@ -249,6 +319,7 @@ export default function CompactPlayerDock({
             {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
           </button>
 
+          {/* Next Track Button */}
           <button
             onClick={onNextTrack}
             className="w-10 h-10 rounded-full glass-panel-subtle hover:bg-sindoor/40 hover:text-white flex items-center justify-center text-sholapith transition-colors active:scale-95 cursor-pointer"
@@ -259,7 +330,7 @@ export default function CompactPlayerDock({
           </button>
         </div>
 
-        {/* Right Side: Ambience Buttons & Volume Slider */}
+        {/* Right Side: Ambience Buttons, Volume Slider & Full Video Modal Button */}
         <div className="flex items-center gap-3 shrink-0">
           {/* Ambience Layer Toggles */}
           <div className="hidden lg:flex items-center gap-1.5 p-1 rounded-full bg-black/50 border border-white/10">
@@ -285,9 +356,9 @@ export default function CompactPlayerDock({
             </button>
           </div>
 
-          {/* Volume Control */}
+          {/* Working Volume Slider Bar & Mute Control */}
           <div className="hidden sm:flex items-center gap-1.5 text-sholapith-muted">
-            <button onClick={toggleMute} className="hover:text-pujaGold transition-colors" type="button">
+            <button onClick={toggleMute} className="hover:text-pujaGold transition-colors cursor-pointer" type="button">
               {isMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-pujaGold" />}
             </button>
             <input
@@ -297,6 +368,7 @@ export default function CompactPlayerDock({
               value={isMuted ? 0 : volume}
               onChange={handleVolumeChange}
               className="w-16 sm:w-20 accent-pujaGold bg-black/50 h-1.5 rounded-lg cursor-pointer"
+              title={`Volume: ${isMuted ? 0 : volume}%`}
             />
           </div>
 
