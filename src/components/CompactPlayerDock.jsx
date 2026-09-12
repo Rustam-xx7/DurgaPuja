@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Play, Pause, SkipBack, SkipForward, Volume2, Maximize2, VolumeX, BarChart2 } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Volume2, Maximize2, VolumeX } from "lucide-react";
 
 export default function CompactPlayerDock({
   track,
@@ -14,14 +14,10 @@ export default function CompactPlayerDock({
   const [volume, setVolume] = useState(85);
   const [isMuted, setIsMuted] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
-  const [ambience, setAmbience] = useState({
-    dhaak: false,
-    shonkho: false
-  });
 
   const playerRef = useRef(null);
   const audioCtxRef = useRef(null);
-  const dhaakTimerRef = useRef(null);
+  const startRequestedRef = useRef(false);
 
   // Initialize Web Audio Context on user gesture safely on client
   const getAudioContext = () => {
@@ -37,6 +33,30 @@ export default function CompactPlayerDock({
     }
     return audioCtxRef.current;
   };
+
+  // Synchronous custom event listener for user gesture play triggers
+  useEffect(() => {
+    const handleStartAudio = () => {
+      startRequestedRef.current = true;
+      getAudioContext();
+      if (playerRef.current && typeof playerRef.current.playVideo === "function") {
+        try {
+          playerRef.current.playVideo();
+        } catch (err) {
+          console.error("Play video failed:", err);
+        }
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("startPujaAudio", handleStartAudio);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("startPujaAudio", handleStartAudio);
+      }
+    };
+  }, []);
 
   // 1. Initialize Official YouTube IFrame Player API
   useEffect(() => {
@@ -59,8 +79,10 @@ export default function CompactPlayerDock({
           onReady: (event) => {
             setIsPlayerReady(true);
             event.target.setVolume(volume);
-            if (isPlaying) {
-              event.target.playVideo();
+            if (isPlaying || startRequestedRef.current) {
+              try {
+                event.target.playVideo();
+              } catch (e) {}
             }
           },
           onStateChange: (event) => {
@@ -157,91 +179,6 @@ export default function CompactPlayerDock({
     }
   };
 
-  // Authentic Bengali Dhaak Beat Synthesizer
-  const playDhaakBeat = () => {
-    const ctx = getAudioContext();
-    if (!ctx) return;
-
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(140, now);
-    osc.frequency.exponentialRampToValueAtTime(50, now + 0.15);
-    gain.gain.setValueAtTime(0.7, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.15);
-
-    setTimeout(() => {
-      if (!audioCtxRef.current) return;
-      const t = audioCtxRef.current.currentTime;
-      const osc2 = audioCtxRef.current.createOscillator();
-      const gain2 = audioCtxRef.current.createGain();
-      osc2.type = "square";
-      osc2.frequency.setValueAtTime(420, t);
-      gain2.gain.setValueAtTime(0.3, t);
-      gain2.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
-      osc2.connect(gain2);
-      gain2.connect(audioCtxRef.current.destination);
-      osc2.start(t);
-      osc2.stop(t + 0.08);
-    }, 120);
-  };
-
-  // Sacred Shonkho (Conch) Sound Synthesizer
-  const playShonkhoSound = () => {
-    const ctx = getAudioContext();
-    if (!ctx) return;
-
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(320, now);
-    osc.frequency.linearRampToValueAtTime(460, now + 0.6);
-    osc.frequency.linearRampToValueAtTime(420, now + 1.8);
-
-    gain.gain.setValueAtTime(0.01, now);
-    gain.gain.linearRampToValueAtTime(0.5, now + 0.4);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 2.0);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 2.0);
-  };
-
-  // Ambience Toggle Logic
-  const toggleAmbience = (type) => {
-    getAudioContext();
-    if (type === "dhaak") {
-      const nextState = !ambience.dhaak;
-      setAmbience((prev) => ({ ...prev, dhaak: nextState }));
-      if (nextState) {
-        playDhaakBeat();
-        dhaakTimerRef.current = setInterval(playDhaakBeat, 600);
-      } else {
-        if (dhaakTimerRef.current) clearInterval(dhaakTimerRef.current);
-      }
-    } else if (type === "shonkho") {
-      const nextState = !ambience.shonkho;
-      setAmbience((prev) => ({ ...prev, shonkho: nextState }));
-      if (nextState) {
-        playShonkhoSound();
-      }
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      if (dhaakTimerRef.current) clearInterval(dhaakTimerRef.current);
-    };
-  }, []);
-
   if (!track) return null;
 
   return (
@@ -330,32 +267,8 @@ export default function CompactPlayerDock({
           </button>
         </div>
 
-        {/* Right Side: Ambience Buttons, Volume Slider & Full Video Modal Button */}
+        {/* Right Side: Volume Slider */}
         <div className="flex items-center gap-3 shrink-0">
-          {/* Ambience Layer Toggles */}
-          <div className="hidden lg:flex items-center gap-1.5 p-1 rounded-full bg-black/50 border border-white/10">
-            <button
-              onClick={() => toggleAmbience("dhaak")}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1 cursor-pointer ${
-                ambience.dhaak ? "bg-sindoor text-white shadow-md font-bold" : "text-sholapith-muted hover:text-white"
-              }`}
-              type="button"
-            >
-              <span>🥁</span>
-              <span>Dhaak</span>
-            </button>
-            <button
-              onClick={() => toggleAmbience("shonkho")}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1 cursor-pointer ${
-                ambience.shonkho ? "bg-pujaGold/30 text-pujaGold border border-pujaGold/40 font-bold" : "text-sholapith-muted hover:text-white"
-              }`}
-              type="button"
-            >
-              <span>🐚</span>
-              <span>Shonkho</span>
-            </button>
-          </div>
-
           {/* Working Volume Slider Bar & Mute Control */}
           <div className="hidden sm:flex items-center gap-1.5 text-sholapith-muted">
             <button onClick={toggleMute} className="hover:text-pujaGold transition-colors cursor-pointer" type="button">

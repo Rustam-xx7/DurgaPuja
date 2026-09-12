@@ -13,10 +13,16 @@ body {
   background-image: url('/images/durgaImage.jpg');
   background-attachment: fixed;
   background-size: cover;
-  background-position: center bottom;
+  background-position: 45% bottom;
   background-repeat: no-repeat;
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+@media (min-width: 641px) {
+  body {
+    background-position: center bottom;
+  }
 }
 
 /* Glassmorphic Panel Design Utilities */
