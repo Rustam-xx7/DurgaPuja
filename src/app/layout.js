@@ -1,4 +1,5 @@
 import { Noto_Serif, Plus_Jakarta_Sans } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const notoSerif = Noto_Serif({
@@ -40,6 +41,7 @@ export default function RootLayout({ children }) {
         className={`${notoSerif.variable} ${plusJakarta.variable} font-sans antialiased selection:bg-sindoor selection:text-white flex flex-col min-h-screen relative`}
       >
         {children}
+        <Analytics />
       </body>
     </html>
   );
