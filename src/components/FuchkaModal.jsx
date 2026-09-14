@@ -65,7 +65,7 @@ export default function FuchkaModal({ isOpen, onClose }) {
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
             <span className="text-xs text-sholapith-muted flex items-center justify-center gap-1.5 font-medium">
               <img src="/fuchka.png" alt="Fuchka" className="w-4 h-4 object-contain" />
-              <span>Select number of Fuchka plates:</span>
+              <span>Select number of phuchka plates:</span>
             </span>
 
             <div className="flex items-center justify-center gap-2">
@@ -120,7 +120,7 @@ export default function FuchkaModal({ isOpen, onClose }) {
               className="w-full py-3.5 rounded-full bg-gradient-to-r from-amber-500 via-rose-500 to-sindoor hover:opacity-95 text-white font-serif font-bold text-sm shadow-xl transition-all border border-amber-300/40 flex items-center justify-center gap-2 cursor-pointer"
             >
               <CreditCard className="w-4 h-4" />
-              <span>Treat {plates} Plate{plates > 1 ? "s" : ""} of Fuchka (₹{totalPrice})</span>
+              <span>Treat {plates} Plate{plates > 1 ? "s" : ""} of phuchka (₹{totalPrice})</span>
             </a>
 
             <p className="text-[11px] text-sholapith-muted mt-2">

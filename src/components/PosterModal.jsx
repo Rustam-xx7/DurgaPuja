@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { X, Printer, QrCode, Sparkles } from "lucide-react";
+import { X, Printer, Sparkles } from "lucide-react";
 
 export default function PosterModal({ isOpen, onClose }) {
   if (!isOpen) return null;
@@ -36,8 +36,12 @@ export default function PosterModal({ isOpen, onClose }) {
             Durga Puja Pandal Radio & Live Video Playlist
           </p>
 
-          <div className="my-4 p-4 bg-white rounded-2xl inline-block shadow-xl border-4 border-pujaGold">
-            <QrCode className="w-36 h-36 text-slate-900" />
+          <div className="my-4 p-3 bg-white rounded-2xl inline-block shadow-xl border-4 border-pujaGold">
+            <img
+              src="/qrCode.png"
+              alt="Scan Durga Puja Radio QR Code"
+              className="w-40 h-40 object-contain mx-auto rounded-lg"
+            />
           </div>
 
           <p className="text-xs text-sholapith/90 leading-relaxed font-serif">

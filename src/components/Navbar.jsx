@@ -35,7 +35,7 @@ export default function Navbar({ activeUsers = 1, onOpenFuchka, onOpenPoster }) 
           type="button"
         >
           <img src="/fuchka.png" alt="Fuchka" className="w-4 h-4 sm:w-5 sm:h-5 object-contain shrink-0" />
-          <span className="whitespace-nowrap">by me fuchka</span>
+          <span className="whitespace-nowrap">by me phuchka</span>
         </button>
 
         {/* Share with QR Button (Round icon on mobile, full button on desktop) */}
